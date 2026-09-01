@@ -11,6 +11,6 @@ Cloudflare Workers Next.js application powered by vinext.
 
 ## Deployment
 
-The Worker is configured as `pontus-pro` and includes the custom domain `pontus.pro`.
+The Worker is configured as `pontus-pro` and deploys on the existing `pontus.pro/*` Cloudflare route.
 
-Before the first deploy, authenticate Wrangler with `wrangler login` or provide `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in the environment. The `pontus.pro` zone must already exist in the selected Cloudflare account.
+Before the first deploy, authenticate Wrangler with `wrangler login` or provide `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in the environment. The `pontus.pro` zone must already exist in the selected Cloudflare account, and the DNS record for `pontus.pro` must be proxied through Cloudflare.
