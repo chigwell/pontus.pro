@@ -143,11 +143,17 @@ function formatDay(value: string) {
 }
 
 function formatDateTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
   return new Intl.DateTimeFormat("en", {
     day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
     month: "short",
     year: "numeric",
-  }).format(new Date(value));
+  }).format(date);
 }
 
 async function apiGet<T>(path: string, token: string): Promise<T> {
