@@ -170,13 +170,18 @@ export default function Home() {
             </span>
             <span className="brand-name">Pontus Pro</span>
           </a>
-          <button
-            className="theme-toggle"
-            type="button"
-            onClick={toggleTheme}
-            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-            title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-          />
+          <div className="topbar-actions">
+            <a className="dashboard-link" href="/dashboard">
+              Dashboard
+            </a>
+            <button
+              className="theme-toggle"
+              type="button"
+              onClick={toggleTheme}
+              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+            />
+          </div>
         </div>
       </header>
 

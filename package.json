@@ -5,9 +5,11 @@
   "packageManager": "npm@11.6.2",
   "dependencies": {
     "@vinext/cloudflare": "latest",
+    "lucide-react": "^1.39.0",
     "react": "latest",
     "react-dom": "latest",
     "react-server-dom-webpack": "latest",
+    "recharts": "^3.10.1",
     "vinext": "latest"
   },
   "devDependencies": {
