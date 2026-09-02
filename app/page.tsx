@@ -195,7 +195,7 @@ export default function Home() {
 
           <section className="stats-board" aria-label="Public usage totals">
             <div className="stats-heading">
-              <span>All time</span>
+              <span>All time usage</span>
               <span className={statsError ? "status-error" : undefined}>
                 {statsError ? "Unavailable" : generatedAtLabel}
               </span>

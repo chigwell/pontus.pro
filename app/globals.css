@@ -226,8 +226,8 @@ pre {
 .hero-inner {
   align-items: end;
   display: grid;
-  gap: clamp(44px, 8vw, 150px);
-  grid-template-columns: minmax(260px, 0.68fr) minmax(0, 1.32fr);
+  gap: clamp(42px, 6vw, 96px);
+  grid-template-columns: minmax(560px, 0.95fr) minmax(0, 1.05fr);
   margin: 0 auto;
   max-width: 1380px;
   min-height: 470px;
@@ -473,7 +473,7 @@ pre {
   margin: 0;
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 1280px) {
   .hero-inner {
     gap: 54px;
     grid-template-columns: 1fr;
