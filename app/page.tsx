@@ -1,16 +1,280 @@
+"use client";
+
 import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+
+type Theme = "light" | "dark";
+type ScriptTab = "sh" | "powershell";
+
+type PublicStatsCounters = {
+  total_tokens: number;
+  messages_count: number;
+  recommendations_count: number;
+};
+
+type PublicStatsSummary = {
+  all_time: PublicStatsCounters;
+  last_24h: PublicStatsCounters;
+  generated_at: string;
+  cache_ttl_seconds: number;
+};
+
+const API_DOMAIN = "https://api.pontus.pro";
+const INGEST_URL = `${API_DOMAIN}/v2/transcript-segments`;
+
+const INSTALL_COMMANDS: Record<ScriptTab, string> = {
+  sh: `curl -fsSL https://pontus.pro/script | sh -s -- \\
+  --agent both \\
+  --url ${INGEST_URL} \\
+  --token YOUR_API_TOKEN`,
+  powershell: `$installer = Join-Path $env:TEMP "pontus-auto-improve.ps1"
+Invoke-WebRequest -Uri "https://pontus.pro/script.ps1" -OutFile $installer
+& $installer -Agent both -Url "${INGEST_URL}" -Token "YOUR_API_TOKEN"`,
+};
+
+const METRICS = [
+  { label: "Tokens", key: "total_tokens", shortLabel: "tokens" },
+  { label: "Messages", key: "messages_count", shortLabel: "messages" },
+  { label: "Ideas", key: "recommendations_count", shortLabel: "ideas" },
+] as const;
+
+const FEATURES = [
+  ["01", "Codex + Claude Code"],
+  ["02", "Durable local outbox"],
+  ["03", "Process improvements"],
+] as const;
+
+function applyTheme(theme: Theme) {
+  document.documentElement.dataset.theme = theme;
+  window.localStorage.setItem("pontus-theme", theme);
+}
+
+function formatMetric(value: number | undefined) {
+  if (value === undefined) {
+    return "...";
+  }
+
+  return new Intl.NumberFormat("en", {
+    maximumFractionDigits: value >= 100_000 ? 1 : 0,
+    notation: value >= 100_000 ? "compact" : "standard",
+  }).format(value);
+}
+
+function formatGeneratedAt(value: string | undefined) {
+  if (!value) {
+    return "Updating";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Live";
+  }
+
+  return `Updated ${new Intl.DateTimeFormat("en", {
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "short",
+  }).format(date)}`;
+}
 
 export default function Home() {
+  const [theme, setTheme] = useState<Theme>("light");
+  const [activeTab, setActiveTab] = useState<ScriptTab>("sh");
+  const [stats, setStats] = useState<PublicStatsSummary | null>(null);
+  const [statsError, setStatsError] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem("pontus-theme");
+    const preferredTheme =
+      savedTheme === "light" || savedTheme === "dark" ? savedTheme : "light";
+
+    setTheme(preferredTheme);
+    applyTheme(preferredTheme);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/public-stats", { headers: { Accept: "application/json" } })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("stats unavailable");
+        }
+        return response.json() as Promise<PublicStatsSummary>;
+      })
+      .then((payload) => {
+        if (!active) {
+          return;
+        }
+        setStats(payload);
+        setStatsError(false);
+      })
+      .catch(() => {
+        if (active) {
+          setStatsError(true);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const installCommand = INSTALL_COMMANDS[activeTab];
+  const generatedAtLabel = useMemo(
+    () => formatGeneratedAt(stats?.generated_at),
+    [stats?.generated_at],
+  );
+
+  async function copyInstallCommand() {
+    try {
+      await window.navigator.clipboard.writeText(installCommand);
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = installCommand;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.append(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      textarea.remove();
+    }
+
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  }
+
+  function toggleTheme() {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    applyTheme(nextTheme);
+  }
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-white p-8" aria-label="Pontus Pro">
-      <Image
-        src="/logo.png"
-        alt="Pontus Pro logo"
-        width={220}
-        height={220}
-        priority
-        className="h-auto w-[min(56vw,220px)]"
-      />
+    <main className="landing-shell">
+      <header className="topbar">
+        <div className="topbar-inner">
+          <a className="brand" href="/" aria-label="Pontus Pro home">
+            <span className="brand-mark" aria-hidden="true">
+              <Image
+                src="/logo.png"
+                alt=""
+                width={42}
+                height={42}
+                priority
+                className="brand-logo"
+              />
+            </span>
+            <span className="brand-name">Pontus Pro</span>
+          </a>
+          <button
+            className="theme-toggle"
+            type="button"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+          />
+        </div>
+      </header>
+
+      <section className="hero" aria-labelledby="usage-title">
+        <div className="prism-rule" aria-hidden="true" />
+        <div className="hero-inner">
+          <div className="hero-copy">
+            <p className="eyebrow">Pontus Pro / Auto-improve</p>
+            <h1 id="usage-title">
+              Public
+              <br />
+              usage.
+            </h1>
+          </div>
+
+          <section className="stats-board" aria-label="Public usage totals">
+            <div className="stats-heading">
+              <span>All time</span>
+              <span className={statsError ? "status-error" : undefined}>
+                {statsError ? "Unavailable" : generatedAtLabel}
+              </span>
+            </div>
+            <div className="stats-grid">
+              {METRICS.map((metric) => {
+                const total = stats?.all_time[metric.key];
+                const lastDay = stats?.last_24h[metric.key];
+                return (
+                  <article className="stat" key={metric.key}>
+                    <span className="stat-label">{metric.label}</span>
+                    <strong>{formatMetric(total)}</strong>
+                    <span className="stat-subline">
+                      +{formatMetric(lastDay)} {metric.shortLabel} / 24h
+                    </span>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section className="install-section" aria-labelledby="install-title">
+        <div className="install-intro">
+          <p className="eyebrow">01 / Install</p>
+          <h2 id="install-title">Set it up once.</h2>
+          <p className="install-detail">Codex and Claude Code.</p>
+        </div>
+
+        <div className="install-surface">
+          <div className="installer-controls">
+            <div className="tabs" role="tablist" aria-label="Installer type">
+              <button
+                className={activeTab === "sh" ? "tab active" : "tab"}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "sh"}
+                onClick={() => setActiveTab("sh")}
+              >
+                sh
+              </button>
+              <button
+                className={activeTab === "powershell" ? "tab active" : "tab"}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "powershell"}
+                onClick={() => setActiveTab("powershell")}
+              >
+                Win
+              </button>
+            </div>
+            <a className="download-link" href={activeTab === "sh" ? "/script" : "/script.ps1"}>
+              Download file
+            </a>
+          </div>
+
+          <div className="script-box">
+            <pre>
+              <code>{installCommand}</code>
+            </pre>
+          </div>
+
+          <div className="install-actions">
+            <button className="copy-button" type="button" onClick={copyInstallCommand}>
+              {copied ? "Copied" : "Copy command"}
+            </button>
+            <code className="api-endpoint">{INGEST_URL}</code>
+          </div>
+        </div>
+      </section>
+
+      <section className="feature-rail" aria-label="Auto-improve features">
+        {FEATURES.map(([number, title]) => (
+          <article className="feature-item" key={number}>
+            <span>{number}</span>
+            <h2>{title}</h2>
+          </article>
+        ))}
+      </section>
     </main>
   );
 }
