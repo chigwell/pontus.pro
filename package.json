@@ -8,6 +8,7 @@
     "lucide-react": "^1.39.0",
     "react": "latest",
     "react-dom": "latest",
+    "react-markdown": "^10.1.0",
     "react-server-dom-webpack": "latest",
     "recharts": "^3.10.1",
     "vinext": "latest"

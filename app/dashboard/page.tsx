@@ -4,7 +4,9 @@ import Image from "next/image";
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -13,7 +15,8 @@ import {
   RefreshCw,
   Sun,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -203,6 +206,10 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [pageLoading, setPageLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedRecommendation, setExpandedRecommendation] =
+    useState<RecommendationDetail | null>(null);
+  const [expandedLoading, setExpandedLoading] = useState(false);
   const [activeSeries, setActiveSeries] = useState<ChartKey[]>(
     CHART_SERIES.map((series) => series.key),
   );
@@ -339,6 +346,39 @@ export default function DashboardPage() {
         return;
       }
       setError("This recommendation could not be copied.");
+    }
+  }
+
+  async function toggleRecommendation(item: Recommendation) {
+    if (expandedId === item.id) {
+      setExpandedId(null);
+      setExpandedRecommendation(null);
+      return;
+    }
+    if (!token) {
+      return;
+    }
+
+    setExpandedId(item.id);
+    setExpandedRecommendation(null);
+    setExpandedLoading(true);
+    setError("");
+    try {
+      const detail = await apiGet<RecommendationDetail>(
+        `/hermes/recommendations/${item.id}`,
+        token,
+      );
+      setExpandedRecommendation(detail);
+    } catch (caught) {
+      const requestError = caught as ApiError;
+      if (requestError.status === 401 || requestError.status === 403) {
+        handleLogout();
+        setError("Your access token has expired. Enter it again.");
+      } else {
+        setError("This recommendation could not be loaded.");
+      }
+    } finally {
+      setExpandedLoading(false);
     }
   }
 
@@ -521,34 +561,82 @@ export default function DashboardPage() {
                   <th scope="col">Project</th>
                   <th scope="col">Sessions</th>
                   <th scope="col">Created</th>
+                  <th scope="col"><span className="sr-only">Open page</span></th>
                   <th scope="col"><span className="sr-only">Copy</span></th>
                 </tr>
               </thead>
               <tbody aria-busy={pageLoading}>
-                {recommendations.items.length ? recommendations.items.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      <div className="recommendation-title">{item.title}</div>
-                      <span className="recommendation-kind">{item.intervention_type || item.result_type}</span>
-                    </td>
-                    <td>{item.project_key || "No project"}</td>
-                    <td>{item.session_count}</td>
-                    <td>{formatDateTime(item.created_at)}</td>
-                    <td>
-                      <button
-                        className="copy-icon-button"
-                        type="button"
-                        onClick={() => void copyRecommendation(item)}
-                        aria-label={`Copy ${item.title}`}
-                        title="Copy recommendation"
-                      >
-                        {copiedId === item.id ? <Check aria-hidden="true" size={16} /> : <Copy aria-hidden="true" size={16} />}
-                      </button>
-                    </td>
-                  </tr>
-                )) : (
+                {recommendations.items.length ? recommendations.items.map((item) => {
+                  const isExpanded = expandedId === item.id;
+                  return (
+                    <Fragment key={item.id}>
+                      <tr className={isExpanded ? "recommendation-row is-expanded" : "recommendation-row"}>
+                        <td>
+                          <button
+                            className="recommendation-expand-trigger"
+                            type="button"
+                            onClick={() => void toggleRecommendation(item)}
+                            aria-expanded={isExpanded}
+                            aria-controls={`recommendation-detail-${item.id}`}
+                          >
+                            <span>
+                              <span className="recommendation-title">{item.title}</span>
+                              <span className="recommendation-kind">{item.intervention_type || item.result_type}</span>
+                            </span>
+                            <ChevronDown className="recommendation-chevron" aria-hidden="true" size={16} strokeWidth={1.7} />
+                          </button>
+                        </td>
+                        <td>{item.project_key || "No project"}</td>
+                        <td>{item.session_count}</td>
+                        <td>{formatDateTime(item.created_at)}</td>
+                        <td>
+                          <a
+                            className="page-icon-link"
+                            href={`/dashboard/recommendations/${encodeURIComponent(item.id)}`}
+                            aria-label={`Open ${item.title}`}
+                            title="Open full page"
+                          >
+                            <ArrowUpRight aria-hidden="true" size={16} />
+                          </a>
+                        </td>
+                        <td>
+                          <button
+                            className="copy-icon-button"
+                            type="button"
+                            onClick={() => void copyRecommendation(item)}
+                            aria-label={`Copy ${item.title}`}
+                            title="Copy recommendation"
+                          >
+                            {copiedId === item.id ? <Check aria-hidden="true" size={16} /> : <Copy aria-hidden="true" size={16} />}
+                          </button>
+                        </td>
+                      </tr>
+                      {isExpanded ? (
+                        <tr className="recommendation-detail-row" id={`recommendation-detail-${item.id}`}>
+                          <td colSpan={6}>
+                            {expandedLoading ? (
+                              <p className="recommendation-loading">Loading full recommendation...</p>
+                            ) : expandedRecommendation ? (
+                              <div className="recommendation-inline-detail">
+                                <div className="inline-detail-topline">
+                                  <span>{expandedRecommendation.project_key || "No project"}</span>
+                                  <a href={`/dashboard/recommendations/${encodeURIComponent(item.id)}`}>
+                                    Open page <ArrowUpRight aria-hidden="true" size={14} />
+                                  </a>
+                                </div>
+                                <div className="recommendation-report">
+                                  <ReactMarkdown>{expandedRecommendation.report_markdown}</ReactMarkdown>
+                                </div>
+                              </div>
+                            ) : null}
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
+                  );
+                }) : (
                   <tr>
-                    <td className="empty-row" colSpan={5}>No recommendations yet.</td>
+                    <td className="empty-row" colSpan={6}>No recommendations yet.</td>
                   </tr>
                 )}
               </tbody>
