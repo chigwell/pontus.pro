@@ -1035,15 +1035,18 @@ pre {
   color: var(--muted);
 }
 
-.recommendation-detail-row td {
+.recommendations-table .recommendation-detail-row td {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   padding: 0;
+  text-align: left;
+  width: auto;
 }
 
 .recommendation-inline-detail {
   max-width: 940px;
   padding: 25px 28px 30px;
+  text-align: left;
 }
 
 .inline-detail-topline {
@@ -1076,6 +1079,7 @@ pre {
   color: var(--text);
   font-size: 14px;
   line-height: 1.7;
+  text-align: left;
 }
 
 .recommendation-report > :first-child {
