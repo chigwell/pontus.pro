@@ -190,11 +190,7 @@ export default function Home() {
         <div className="hero-inner">
           <div className="hero-copy">
             <p className="eyebrow">Pontus Pro / Auto-improve</p>
-            <h1 id="usage-title">
-              Public
-              <br />
-              usage.
-            </h1>
+            <h1 id="usage-title">Continuous improvement for AI agents.</h1>
           </div>
 
           <section className="stats-board" aria-label="Public usage totals">
@@ -280,6 +276,12 @@ export default function Home() {
           </article>
         ))}
       </section>
+
+      <footer className="site-footer">
+        <div className="site-footer-inner">
+          <p>Copyright 2026 Pontus Pro. Made with ❤️ by Eugene Evstafev.</p>
+        </div>
+      </footer>
     </main>
   );
 }

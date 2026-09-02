@@ -140,8 +140,10 @@ pre {
 
 .brand-name {
   color: var(--ink);
-  font-size: 15px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 0.95;
 }
 
 .topbar-actions,
@@ -250,9 +252,10 @@ pre {
 }
 
 .hero h1 {
-  font-size: clamp(68px, 9vw, 144px);
-  line-height: 0.77;
+  font-size: clamp(58px, 6.6vw, 112px);
+  line-height: 0.86;
   margin: 18px 0 0 -5px;
+  max-width: 720px;
 }
 
 .stats-board {
@@ -305,13 +308,14 @@ pre {
 
 .stat strong {
   color: var(--ink);
+  display: block;
   font-family: var(--font-display);
-  font-size: clamp(44px, 5.4vw, 86px);
+  font-size: clamp(40px, 4.6vw, 72px);
   font-variant-numeric: tabular-nums;
   font-weight: 400;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.025em;
   line-height: 0.88;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 
 .status-error {
@@ -469,8 +473,22 @@ pre {
   margin: 0;
 }
 
+@media (max-width: 1120px) {
+  .hero-inner {
+    gap: 54px;
+    grid-template-columns: 1fr;
+  }
+
+  .hero h1 {
+    max-width: 900px;
+  }
+
+  .stats-grid {
+    max-width: 800px;
+  }
+}
+
 @media (max-width: 920px) {
-  .hero-inner,
   .install-section {
     gap: 54px;
     grid-template-columns: 1fr;
@@ -483,7 +501,7 @@ pre {
   }
 
   .hero h1 {
-    font-size: clamp(72px, 14vw, 118px);
+    font-size: clamp(58px, 11vw, 96px);
   }
 
   .stats-grid {
@@ -508,7 +526,7 @@ pre {
   }
 
   .brand-name {
-    font-size: 14px;
+    font-size: 20px;
   }
 
   .hero-inner {
@@ -518,8 +536,8 @@ pre {
   }
 
   .hero h1 {
-    font-size: clamp(74px, 25vw, 108px);
-    line-height: 0.78;
+    font-size: clamp(50px, 15vw, 76px);
+    line-height: 0.88;
   }
 
   .stats-grid {
@@ -537,7 +555,7 @@ pre {
   }
 
   .stat strong {
-    font-size: 64px;
+    font-size: clamp(54px, 16vw, 64px);
   }
 
   .install-section {
@@ -580,6 +598,30 @@ pre {
   .feature-item + .feature-item {
     border-left: 0;
     border-top: 1px solid var(--border);
+  }
+}
+
+.site-footer {
+  border-top: 1px solid var(--border);
+}
+
+.site-footer-inner {
+  margin: 0 auto;
+  max-width: 1380px;
+  padding: 22px 32px 28px;
+}
+
+.site-footer p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+@media (max-width: 620px) {
+  .site-footer-inner {
+    padding-left: 18px;
+    padding-right: 18px;
   }
 }
 
